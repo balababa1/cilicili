@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MineDeveloperDiagnosticsView: View {
     @AppStorage(PlaybackRecoveryTestSettings.showsPlayerMenuEntryKey) private var showsRecoveryTestEntry = false
+    @AppStorage(playerGeometryDiagnosticsEnabledKey) private var playerGeometryDiagnosticsEnabled = false
     @ObservedObject var libraryStore: LibraryStore
     let api: BiliAPIClient
 
@@ -50,6 +51,26 @@ struct MineDeveloperDiagnosticsView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+
+            Toggle(isOn: $playerGeometryDiagnosticsEnabled) {
+                VStack(alignment: .leading, spacing: 4) {
+                    MineSettingsLabel("播放器几何诊断", systemImage: "viewfinder")
+                    Text("记录播放器视图、绘制层与全屏容器的几何数据，用于定位全屏画面偏移。")
+                        .appTypography(.settingsSubtitle, fallback: .caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .accessibilityIdentifier("mine.diagnostics.playerGeometry")
+
+            NavigationLink {
+                PlayerGeometryDiagnosticsView(libraryStore: libraryStore)
+            } label: {
+                PlainSettingsNavigationRow(
+                    title: "播放器几何日志",
+                    subtitle: "全屏偏移相关的布局快照"
+                )
             }
 
             NavigationLink {

@@ -180,14 +180,12 @@ final class VideoDetailSwiftUIContainerModel: ObservableObject {
     }
 
     func synchronize(layout: VideoDetailShellLayout) {
-        #if DEBUG
-            if playerFrame != layout.playerFrame {
-                print(
-                    "[VideoDetailGeometry] coordinates=SwiftUI-root playerFrame=\(layout.playerFrame) "
-                        + "contentFrame=\(layout.contentFrame) safeArea=\(rootSafeAreaInsets)"
-                )
-            }
-        #endif
+        if playerFrame != layout.playerFrame, PlayerGeometryDiagnostics.isEnabled {
+            PlayerGeometryDiagnostics.log(
+                "[VideoDetailGeometry] coordinates=SwiftUI-root playerFrame=\(layout.playerFrame) "
+                    + "contentFrame=\(layout.contentFrame) safeArea=\(rootSafeAreaInsets)"
+            )
+        }
         if playerFrame != layout.playerFrame {
             playerFrame = layout.playerFrame
             #if DEBUG
