@@ -122,8 +122,9 @@ final class VideoDetailRotationBridgeViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         if PlayerGeometryDiagnostics.isEnabled {
-            PlayerGeometryDiagnostics.log(
-                "[VideoDetailGeometry] stage=rotationBridgeLayout window=\(view.window?.bounds as Any) root=\(view.bounds) safeArea=\(view.safeAreaInsets) playerFrame=\(contentController.playerFrame)"
+            PlayerGeometryDiagnostics.logDeduped(
+                key: "rotationBridgeLayout",
+                "[VideoDetailGeometry] stage=rotationBridgeLayout window=\(view.window?.bounds as Any) root=\(view.bounds) safeArea=\(view.safeAreaInsets) playerFrame=\(contentController.playerFrame) sceneOrientation=\(String(describing: view.window?.windowScene?.effectiveGeometry.interfaceOrientation))"
             )
         }
     }
@@ -220,6 +221,9 @@ final class VideoDetailRotationBridgeViewController: UIViewController {
     ) {
         super.viewWillTransition(to: size, with: transitionCoordinator)
         let toLandscape = size.width > size.height
+        PlayerGeometryDiagnostics.log(
+            "[VideoDetailGeometry] stage=rotationWillTransition targetSize=\(size) toLandscape=\(toLandscape) root=\(view.bounds) contentView=\(contentController.view.bounds) playerFrame=\(contentController.playerFrame)"
+        )
         rotationGeneration += 1
         let generation = rotationGeneration
         cancelRotationTasks()
@@ -243,6 +247,9 @@ final class VideoDetailRotationBridgeViewController: UIViewController {
             self?.setNeedsUpdateOfScreenEdgesDeferringSystemGestures()
         }, completion: { [weak self] _ in
             guard let self, self.rotationGeneration == generation else { return }
+            PlayerGeometryDiagnostics.log(
+                "[VideoDetailGeometry] stage=rotationTransitionCompleted root=\(self.view.bounds) window=\(self.view.window?.bounds as Any) contentView=\(self.contentController.view.bounds) playerFrame=\(self.contentController.playerFrame)"
+            )
             self.contentController.markSystemTransitionEnded()
             self.scheduleRotationCompletion(
                 generation: generation,

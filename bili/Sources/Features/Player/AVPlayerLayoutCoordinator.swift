@@ -20,18 +20,18 @@ final class AVPlayerLayoutCoordinator {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         playerLayer.videoGravity = gravity
-        playerLayer.frame = containerView.bounds
-        playerLayer.position = CGPoint(x: containerView.bounds.midX, y: containerView.bounds.midY)
+        // containerView.bounds.origin 非零时（父容器带偏移），原样赋值会把偏移带进播放层。
+        let targetFrame: CGRect = CGRect(origin: .zero, size: containerView.bounds.size)
+        playerLayer.frame = targetFrame
+        playerLayer.position = CGPoint(x: targetFrame.midX, y: targetFrame.midY)
         playerLayer.setNeedsLayout()
         playerLayer.setNeedsDisplay()
         playerLayer.layoutIfNeeded()
         CATransaction.commit()
         if PlayerGeometryDiagnostics.isEnabled {
             let geometry: String = "[VideoDetailGeometry] stage=avPlayerLayerLayout coordinates=drawable-local layerFrame=\(playerLayer.frame) layerBounds=\(playerLayer.bounds) videoRect=\(playerLayer.videoRect) gravity=\(gravity.rawValue) presentationSize=\(playerLayer.player?.currentItem?.presentationSize as Any)"
-            if geometry != lastGeometry {
-                lastGeometry = geometry
-                PlayerGeometryDiagnostics.log(geometry)
-            }
+            lastGeometry = geometry
+            PlayerGeometryDiagnostics.logDeduped(key: "avPlayerLayerLayout", geometry)
             if let item = playerLayer.player?.currentItem, diagnosticItem !== item {
                 diagnosticItem = item
                 Task { @MainActor [weak item] in
@@ -93,7 +93,7 @@ final class AVPlayerLayoutCoordinator {
 
         if PlayerGeometryDiagnostics.isEnabled {
             let geometry: String = "[VideoDetailGeometry] stage=avPlayerControllerLayout bounds=\(bounds) target=\(targetFrame) previousFrame=\(previousFrame) frame=\(playerView.frame) maskBefore=\(previousMaskRawValue) videoBounds=\(playerController.videoBounds) gravity=\(gravity.rawValue)"
-            PlayerGeometryDiagnostics.log(geometry)
+            PlayerGeometryDiagnostics.logDeduped(key: "avPlayerControllerLayout", geometry)
             if previousFrame != targetFrame {
                 PlayerGeometryDiagnostics.log("[VideoDetailGeometry] mismatch stage=avPlayerControllerLayout previous=\(previousFrame) target=\(targetFrame)")
             }
@@ -143,6 +143,17 @@ enum PlayerGeometryDiagnostics {
         if buffer.count > maximumLineCount {
             buffer.removeFirst(buffer.count - maximumLineCount)
         }
+    }
+
+    /// 同一 key 内容未变化时不再重复记录，避免旋转关键期被重复行挤满缓冲。
+    private static var dedupeCache: [String: String] = [:]
+
+    static func logDeduped(key: String, _ message: @autoclosure () -> String) {
+        guard isEnabled else { return }
+        let line: String = message()
+        if dedupeCache[key] == line { return }
+        dedupeCache[key] = line
+        log(line)
     }
 
     static var lines: [String] {

@@ -444,7 +444,8 @@ final class VideoSurfaceContainerView: UIView {
         lastReportedBounds = bounds
         if PlayerGeometryDiagnostics.isEnabled {
             let layer: AVPlayerLayer? = drawableView.layer.sublayers?.compactMap { $0 as? AVPlayerLayer }.first
-            PlayerGeometryDiagnostics.log(
+            PlayerGeometryDiagnostics.logDeduped(
+                key: "surfaceLayout",
                 "[VideoDetailGeometry] stage=surfaceLayout surfaceFrame(parent)=\(frame) surfaceBounds(local)=\(bounds) surfaceWindow=\(convert(bounds, to: window)) drawableFrame(surface)=\(drawableView.frame) drawableBounds(local)=\(drawableView.bounds) nativeFrame(drawable)=\(isNativePlaybackControllerEnabled ? String(describing: nativePlayerViewController.view.frame) : "unused") layerFrame(drawable)=\(layer?.frame as Any) videoRect(layer)=\(layer?.videoRect as Any) gravity=\(layer?.videoGravity.rawValue as Any) presentationSize=\(layer?.player?.currentItem?.presentationSize as Any)"
             )
         }
